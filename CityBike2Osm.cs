@@ -49,11 +49,15 @@ namespace CBike2Osm
                         //下載檔案
                         CBikeDataDownloader _downloader = new CBikeDataDownloader("http://www.c-bike.com.tw/xml/stationlistopendata.aspx");
                         //下載成功
-                        if (_downloader.strUnFormatedData != "No Useful Data!!!!!!!!!")
+                        if (_downloader.strUnFormatedData != "")
                         {
                             //轉換格式
                             CBikeDataConverter _converter = new CBikeDataConverter(_downloader.strUnFormatedData);
-                            Console.WriteLine(_converter.SaveData() + "Saved.");
+
+                            string result = _converter.SaveData();
+
+                            if(result != "")
+                                Console.WriteLine(result + "Saved.");
                         }
                     }
                     break;
@@ -82,13 +86,16 @@ namespace CBike2Osm
                             Console.WriteLine("Load file Successuful!");
 
                             CBikeDataDownloader _downloader = new CBikeDataDownloader("http://www.c-bike.com.tw/xml/stationlistopendata.aspx");
-                            if (_downloader.strUnFormatedData != "No Useful Data!!!!!!!!!")
+                            if (_downloader.strUnFormatedData != "")
                             {
                                 CBikeDataConverter _converter = new CBikeDataConverter(_downloader.strUnFormatedData);
 
                                 CBikeDataComparer _comparer = new CBikeDataComparer(_converter.FormatedData, _old);
 
-                                Console.WriteLine(_comparer.SaveData() + "Saved.");
+                                string result = _comparer.SaveData();
+
+                                if(result != "")
+                                    Console.WriteLine(result + "Saved.");
                             }
                         }
                     }
@@ -123,7 +130,7 @@ namespace CBike2Osm
                 if (_unformatedData != "")
                     return _unformatedData;
                 else
-                    return "No Useful Data!!!!!!!!!";
+                    return "";
             }
         }
         private string _unformatedData;
@@ -146,9 +153,9 @@ namespace CBike2Osm
 
                 wc.Dispose();
             }
-            catch
+            catch(WebException e)
             {
-                Console.WriteLine("Download Fail !");
+                Console.WriteLine("Download Fail ! Code:" + e.Message);
             }
         }
     }
@@ -189,13 +196,14 @@ namespace CBike2Osm
             try
             {
                 _compareDoc.Save(_fileName);
+                return _fileName;
             }
-            catch
+            catch(XmlException e)
             {
-                Console.WriteLine("Compared data fail to save , check your output xml vaild.");
+                Console.WriteLine("Compared data fail to save , check your collected xml format is vaild.");
+                Console.WriteLine("Code:" + e.Message);
+                return "";
             }
-            return _fileName;
-
         }
 
         /// <summary>
@@ -203,7 +211,7 @@ namespace CBike2Osm
         /// </summary>
         /// <param name="_new">新資料</param>
         /// <param name="_old">舊資料</param>
-        private void Compare(XmlDocument _new, XmlDocument _old)
+        private bool Compare(XmlDocument _new, XmlDocument _old)
         {
             Console.WriteLine("Start compare !");
 
@@ -258,14 +266,16 @@ namespace CBike2Osm
             //結束後檢查是否雙方都被刪到沒資料
             if (_newDataNodes.Count == 0 && _oldDataNodes.Count == 0)
             {
-                Console.WriteLine("Two files is the same");
+                Console.WriteLine("Two files is the same.");
+                return false;
             }
             else
             {
                 Console.WriteLine("Compared Completed !");
 
-                //整理資料
+              //整理資料
                 CollectData(_newDoc, _oldDoc);
+                return true;
 
                 //Console.WriteLine(_newDataNodes.Count);
                 //Console.WriteLine(_oldDataNodes.Count);
@@ -279,6 +289,8 @@ namespace CBike2Osm
         /// <param name="_ComparedOld">舊資料</param>
         private void CollectData(XmlDocument _ComparedNew, XmlDocument _ComparedOld)
         {
+            Console.WriteLine("Collect Data Start!");
+
             XmlNodeList _newDataNodes = _ComparedNew.SelectNodes("osm/node");
             XmlNodeList _oldDataNodes = _ComparedOld.SelectNodes("osm/node");
 
@@ -358,13 +370,14 @@ namespace CBike2Osm
             try
             {
                 _formatedData.Save(_fileName);
+                return _fileName;
             }
-            catch
+            catch(XmlException e)
             {
-                Console.WriteLine("New Data Save Failed !!!");
+                Console.WriteLine("Data Save Failed ! Check your xml format is vailed.");
+                Console.WriteLine("Code:" + e.Message);
+                return "";
             }
-            return _fileName;
-
         }
 
         /// <summary>
@@ -374,6 +387,8 @@ namespace CBike2Osm
         /// <returns></returns>
         private XmlDocument ReadString2OSMXML(string origin)
         {
+            Console.WriteLine("Convert Start !");
+
             //讀取原始XML資料
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(origin);
