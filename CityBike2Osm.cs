@@ -56,7 +56,7 @@ namespace CBike2Osm
 
                             string result = _converter.SaveData();
 
-                            if(result != "")
+                            if (result != "")
                                 Console.WriteLine(result + "Saved.");
                         }
                     }
@@ -94,13 +94,13 @@ namespace CBike2Osm
 
                                 string result = _comparer.SaveData();
 
-                                if(result != "")
+                                if (result != "")
                                     Console.WriteLine(result + "Saved.");
                             }
                         }
                     }
                     break;
-                    //Etc. 輸入無效的指令
+                //Etc. 輸入無效的指令
                 default:
                     {
                         Console.WriteLine("Not Availeble Command.");
@@ -153,7 +153,7 @@ namespace CBike2Osm
 
                 wc.Dispose();
             }
-            catch(WebException e)
+            catch (WebException e)
             {
                 Console.WriteLine("Download Fail ! Code:" + e.Message);
             }
@@ -198,7 +198,7 @@ namespace CBike2Osm
                 _compareDoc.Save(_fileName);
                 return _fileName;
             }
-            catch(XmlException e)
+            catch (XmlException e)
             {
                 Console.WriteLine("Compared data fail to save , check your collected xml format is vaild.");
                 Console.WriteLine("Code:" + e.Message);
@@ -234,8 +234,14 @@ namespace CBike2Osm
                     //Console.WriteLine("---------------");
                     //Console.WriteLine(_newDataNodes.Item(i).Attributes["id"].Value);
 
+                    XmlNodeList _NewDataChilds = _newDataNodes.Item(i).ChildNodes;
+                    XmlNodeList _OldDataChilds = _oldDataNodes.Item(j).ChildNodes;
+
+                    string _newDataRef = _NewDataChilds.Item(2).Attributes["v"].Value;
+                    string _oldDataRef = _OldDataChilds.Item(2).Attributes["v"].Value;
+
                     //新資料節點和舊資料節點一樣
-                    if (_oldDataNodes.Item(j).Attributes["id"].Value == _newDataNodes.Item(i).Attributes["id"].Value)
+                    if (_oldDataRef == _newDataRef)
                     {
                         //刪除舊資料節點
                         XmlNode _shouldRemoveNode = _oldDataNodes.Item(j);
@@ -273,7 +279,7 @@ namespace CBike2Osm
             {
                 Console.WriteLine("Compared Completed !");
 
-              //整理資料
+                //整理資料
                 CollectData(_newDoc, _oldDoc);
                 return true;
 
@@ -372,7 +378,7 @@ namespace CBike2Osm
                 _formatedData.Save(_fileName);
                 return _fileName;
             }
-            catch(XmlException e)
+            catch (XmlException e)
             {
                 Console.WriteLine("Data Save Failed ! Check your xml format is vailed.");
                 Console.WriteLine("Code:" + e.Message);
@@ -413,7 +419,8 @@ namespace CBike2Osm
             {
                 //產生Node和屬性
                 XmlElement node = resultdoc.CreateElement("node");
-                node.SetAttribute("id", doc.ImportNode(stations.Item(i)["StationID"], true).InnerText);
+
+                node.SetAttribute("id", "-" + doc.ImportNode(stations.Item(i)["StationID"], true).InnerText);
                 node.SetAttribute("lat", doc.ImportNode(stations.Item(i)["StationLat"], true).InnerText);
                 node.SetAttribute("lon", doc.ImportNode(stations.Item(i)["StationLon"], true).InnerText);
                 node.SetAttribute("visible", "true");
@@ -430,7 +437,7 @@ namespace CBike2Osm
                 staRef.SetAttribute("v", doc.ImportNode(stations.Item(i)["StationNO"], true).InnerText);
 
                 XmlElement staNote = resultdoc.CreateElement("tag");
-                staNote.SetAttribute("k", "note");
+                staNote.SetAttribute("k", "description");
                 staNote.SetAttribute("v", doc.ImportNode(stations.Item(i)["StationDesc"], true).InnerText);
 
 
@@ -447,6 +454,13 @@ namespace CBike2Osm
                 amenity.SetAttribute("k", "amenity");
                 amenity.SetAttribute("v", "bicycle_rental");
 
+                XmlElement website = resultdoc.CreateElement("tag");
+                website.SetAttribute("k", "website");
+                website.SetAttribute("v", "http://www.c-bike.com.tw/");
+
+                XmlElement image = resultdoc.CreateElement("tag");
+                image.SetAttribute("k", "image");
+                image.SetAttribute("v", doc.ImportNode(stations.Item(i)["StationPic"], true).InnerText);
 
                 node.AppendChild(amenity);
                 node.AppendChild(staName);
@@ -454,6 +468,8 @@ namespace CBike2Osm
                 node.AppendChild(staOperator);
                 node.AppendChild(staNetwork);
                 node.AppendChild(staNote);
+                node.AppendChild(website);
+                node.AppendChild(image);
 
                 osm.AppendChild(node);
             }
