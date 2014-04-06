@@ -10,10 +10,10 @@ using System.Net;
  * Features:
  * 1.轉換系統： 下載最新的data，並轉換成OSM XML 檔案
  * 2.差異系統： 最新的data轉換後 , 和指定某時期的XML比較。多增加的站點以一般TAG表示 , 減少的以FIXME TAG標示 , 最後整合匯出差異 OSM_XML
+ * 3.差異系統(本機對本機)：比較本機上的兩個OSM XML檔案差異
  * 
  * TODO:
  * 1.雲端系統：每匯出一次就把該資料送到雲端(EX.Dropbox), 使用者可選擇雲端上某時期的檔案和最新的data做比較
- * 2.差異系統(本機對本機)：比較本機上的兩個OSM XML檔案差異
  * 
  */
 
@@ -31,12 +31,16 @@ namespace CBike2Osm
         /// </summary>
         private static string _compareFileName = "";
 
+        private static string _NewCompareFile = "";
+        private static string _OldCompareFile = "";
+
         static void Main(string[] args)
         {
             Console.WriteLine("City Bike Data Tool v2.0 by Kagami");
             Console.WriteLine("-----------------------------------");
             Console.WriteLine("1.DownLoad new data and save.");
             Console.WriteLine("2.Compare new data with other data , and generate compare data.");
+            Console.WriteLine("3.Compare two datas in local");
             Console.WriteLine("Please Choose with number:");
             _command = Console.ReadLine();
 
@@ -76,8 +80,8 @@ namespace CBike2Osm
                         }
                         catch
                         {
-                            Console.WriteLine("Failed to load file!");
-                            return;
+                            Console.WriteLine("Failed to load file! Please check input name is vaild or the file is exist.");
+                            break;
                         }
 
                         //XML為有效的才做
@@ -100,6 +104,50 @@ namespace CBike2Osm
                         }
                     }
                     break;
+                //3.差異系統(本地比較)
+                case "3":
+                    {
+                        Console.WriteLine("Press NEWER file name without sub-file name:");
+                        _NewCompareFile = Console.ReadLine();
+
+                        XmlDocument _new = new XmlDocument();
+                        try
+                        {
+                            _new.Load(_NewCompareFile + ".xml");
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Failed to load file! Please check input name is vaild or the file is exist.");
+                            break;
+                        }
+
+                        Console.WriteLine("Press OLDER file name without sub-file name:");
+                        _OldCompareFile = Console.ReadLine();
+
+                        XmlDocument _old = new XmlDocument();
+                        try
+                        {
+                            _old.Load(_OldCompareFile + ".xml");
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Failed to load file! Please check input name is vaild or the file is exist.");
+                            break;
+                        }
+
+                        if (_old.HasChildNodes && _new.HasChildNodes)
+                        {
+                            Console.WriteLine("Load file Successuful!");
+
+                            CBikeDataComparer _comparer = new CBikeDataComparer(_new , _old);
+
+                            string result = _comparer.SaveData();
+
+                            if (result != "")
+                                Console.WriteLine(result + "Saved.");
+                        }
+                    }
+                    break;
                 //Etc. 輸入無效的指令
                 default:
                     {
@@ -111,6 +159,9 @@ namespace CBike2Osm
             //清除資料
             _command = "";
             _compareFileName = "";
+
+            _NewCompareFile = "";
+            _OldCompareFile = "";
 
             //結束程式
             Console.WriteLine("Press Any Key to Exit!");
