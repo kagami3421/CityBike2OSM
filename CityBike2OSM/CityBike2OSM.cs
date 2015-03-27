@@ -17,9 +17,9 @@ using System.Net;
  * 
  */
 
-namespace CBike2Osm
+namespace CityBike2OSM
 {
-    class CityBike2Osm
+    class CityBike2OSM
     {
         /// <summary>
         /// 命令
@@ -139,7 +139,7 @@ namespace CBike2Osm
                         {
                             Console.WriteLine("Load file Successuful!");
 
-                            CBikeDataComparer _comparer = new CBikeDataComparer(_new , _old);
+                            CBikeDataComparer _comparer = new CBikeDataComparer(_new, _old);
 
                             string result = _comparer.SaveData();
 
